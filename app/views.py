@@ -35,12 +35,12 @@ def login():
 
     form = LoginForm()
 
-    if form.validate_on_submit():
+    if request.method == 'POST' and form.validate_on_submit():
         #if form.username.data and form.password.data:
         username = form.username.data
         password = form.password.data
 
-        user = UserProfile.query.filter_by(username=username, password=password).first()
+        user = UserProfile.query.filter_by(username=username).first()
         if user is not None and check_password_hash(user.password, password):
             # using your model, query database for a user based on the username
             # and password submitted. Remember you need to compare the password hash.
@@ -49,9 +49,11 @@ def login():
             # passed to the login_user() method below.
 
             # get user id, load into session
-                
+
+            flash('Logged in successfully', 'success')    
             login_user(user)
-            flash('Logged in successfully', 'success')
+            
+            next_page = request.args.get('next')
             return redirect(url_for("secure_page"))
         else:
             flash("Username or Password is incorrect", 'danger')
@@ -82,7 +84,13 @@ def load_user(id):
 ###
 # The functions below should be applicable to all Flask apps.
 ###
-
+def flash_errors(form):
+    for field, errors in form.errors.items():
+        for error in errors:
+            flash(u"Error in the %s field - %s" % (
+                getattr(form, field).label.text,
+                error
+            ), 'danger')
 
 @app.route('/<file_name>.txt')
 def send_text_file(file_name):
@@ -107,13 +115,7 @@ def page_not_found(error):
     """Custom 404 page."""
     return render_template('404.html'), 404
 
-def flash_errors(form):
-    for field, errors in form.errors.items():
-        for error in errors:
-            flash(u"Error in the %s field - %s" % (
-                getattr(form, field).label.text,
-                error
-            ), 'danger')
+
 
 if __name__ == '__main__':
     app.run(debug=True, host="0.0.0.0", port="8080")
